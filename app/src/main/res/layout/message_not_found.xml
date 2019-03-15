@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:tools="http://schemas.android.com/tools"
+       xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ImageView android:layout_width="wrap_content"
+               app:srcCompat="@drawable/ic_not_found"
+               android:id="@+id/imageNotFound"
+               app:layout_constraintVertical_chainStyle="packed"
+               app:layout_constraintTop_toTopOf="parent"
+               app:layout_constraintBottom_toTopOf="@+id/messageNotFound"
+               app:layout_constraintRight_toRightOf="parent"
+               app:layout_constraintLeft_toLeftOf="parent"
+               android:layout_height="wrap_content"/>
+    <TextView android:layout_width="236dp"
+              android:textColor="#b4b4b4"
+              android:id="@+id/messageNotFound"
+              android:textSize="16sp"
+              app:layout_constraintTop_toBottomOf="@+id/imageNotFound"
+              app:layout_constraintBottom_toBottomOf="parent"
+              tools:text=" По запросу бла-бла-бла ничего не найдено "
+              android:gravity="center_horizontal"
+              android:layout_marginTop="30dp"
+              app:layout_constraintRight_toRightOf="parent"
+              app:layout_constraintLeft_toLeftOf="parent"
+              android:layout_height="wrap_content"/>
+    <android.support.constraint.Group
+            android:id="@+id/groupNotFound"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:constraint_referenced_ids="imageNotFound,messageNotFound" />
+</merge>

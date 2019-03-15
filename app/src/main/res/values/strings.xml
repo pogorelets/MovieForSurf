@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">MovieApplication</string>
+
+    <string name="network_request_error">
+        При загрузке данных произошла ошибка.\n
+        Проверьте Ваше подключение к сети.
+    </string>
+    <string name="serch_for_name">Поиск по названию фильма</string>
+    <string name="error_request">Нам не удалось обработать ваш запрос. Попробуйте ещё раз.</string>
+    <string name="for_request">По запросу \"</string>
+    <string name="not_found">\" ничего не найдено</string>
+</resources>
