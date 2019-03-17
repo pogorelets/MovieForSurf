@@ -5,7 +5,6 @@ import android.view.View
 
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import ru.apptimizm.formatfit.di.preferences.PreferenceProvider
 import ru.lostpolygons.movieapplication.base.BasePresenter
 import ru.lostpolygons.movieapplication.domain.FilterMovie
 import ru.lostpolygons.movieapplication.domain.GetMovie
@@ -34,12 +33,9 @@ class MoviePresenter @Inject constructor(
     private var query = ""
     private var listFavorites: MutableList<Int> = mutableListOf()
 
-
     override fun start() { if (currentPage == 0) { getMovies(currentPage + 1) } }
 
-    fun setFavorite(list: MutableList<Int>){
-        listFavorites = list
-    }
+    override fun setFavorite(list: MutableList<Int>){ listFavorites = list }
 
     override fun attach(view: MovieContract.View) {
         super.attach(view)
@@ -64,7 +60,7 @@ class MoviePresenter @Inject constructor(
         }
     }
 
-    fun setConfiguration(config: Int){ configuration = config }
+    override fun setConfiguration(config: Int){ configuration = config }
 
     override fun setOrientationView(orientation: Int) {
         if (orientation == Configuration.ORIENTATION_PORTRAIT) view?.setPortraitView()
@@ -79,7 +75,7 @@ class MoviePresenter @Inject constructor(
         view?.goneSearchClear()
     }
 
-    fun pullRefresh(){
+    override fun pullRefresh(){
         view?.clearList()
         if (listFilterResult.isNotEmpty())pullRefreshFilterList()
         else pullRefreshAllMovieList()
@@ -103,7 +99,7 @@ class MoviePresenter @Inject constructor(
         getMovies(currentPage + 1)
     }
 
-    override fun getMovies(page: Int) {
+    private fun getMovies(page: Int) {
         if (currentPage == 0) view?.showProgress()
         isLoading = true
         disposables += getMovie.execute(GetMovie.Params(page))
@@ -122,6 +118,7 @@ class MoviePresenter @Inject constructor(
                 {
                     view?.hideLoadingFooter()
                     if (currentPage == 0) {
+                        view?.dismissProgress()
                         view?.setStateErrorRequest(View.VISIBLE)
                         stateErrorRequest = View.VISIBLE
                     } else view?.setRepeatFooter()
@@ -132,17 +129,17 @@ class MoviePresenter @Inject constructor(
 
     }
 
-    fun setStateNotFound(visibility: Int) {
+    override fun setStateNotFound(visibility: Int) {
         stateNotFound = visibility
         view?.setStateNotFound(visibility)
     }
 
-    fun setStateErrorRequest(visibility: Int) {
+    override fun setStateErrorRequest(visibility: Int) {
         stateErrorRequest = visibility
         view?.setStateErrorRequest(visibility)
     }
 
-    fun retryRequest() {
+    override fun retryRequest() {
         view?.hideRepeatFooter()
         lastOperation?.run()
     }
@@ -180,7 +177,7 @@ class MoviePresenter @Inject constructor(
                 })
     }
 
-    fun paging(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int) {
+    override fun paging(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int) {
         if (listFilterResult.isNotEmpty()){ pagingFilterList(visibleItemCount,totalItemCount,firstVisibleItemPosition)
         } else pagingAllMovieList(visibleItemCount, totalItemCount, firstVisibleItemPosition)
     }

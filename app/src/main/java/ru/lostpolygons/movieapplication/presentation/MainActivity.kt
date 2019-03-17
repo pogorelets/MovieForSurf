@@ -4,7 +4,6 @@ import android.support.design.widget.Snackbar
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import dagger.android.AndroidInjection
@@ -19,8 +18,6 @@ import ru.lostpolygons.movieapplication.model.ItemMovie
 import javax.inject.Inject
 
 class MainActivity : BaseActivity(),MovieContract.View , MovieAdapter.MovieClickListener{
-
-
     @Inject
     lateinit var presenter: MoviePresenter
 
@@ -94,7 +91,6 @@ class MainActivity : BaseActivity(),MovieContract.View , MovieAdapter.MovieClick
         setContentView(R.layout.activity_main)
         presenter.setFavorite(prefs.getFavorite())
 
-
         listMovie.adapter = adapter
         presenter.start()
 
@@ -142,4 +138,6 @@ class MainActivity : BaseActivity(),MovieContract.View , MovieAdapter.MovieClick
         presenter.saveListMoviePosition(firstVisibleItemPosition)
         presenter.detach()
     }
+
+
 }

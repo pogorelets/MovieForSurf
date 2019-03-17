@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="height_toolbar">48dp</dimen>
+    <dimen name="padding_edit_search">64dp</dimen>
+    <dimen name="margin_min">8dp</dimen>
+    <dimen name="progress_circle_size">28dp</dimen>
+</resources>

@@ -22,9 +22,15 @@ interface MovieContract {
         fun clearList()
     }
     interface Presenter: BaseContract.Presenter<MovieContract.View>{
-        fun getMovies(page: Int)
+        fun setConfiguration(config: Int)
+        fun setFavorite(list: MutableList<Int>)
         fun filterMovies(query: String)
         fun setOrientationView(orientation: Int)
         fun clearSearch()
+        fun pullRefresh()
+        fun setStateNotFound(visibility: Int)
+        fun setStateErrorRequest(visibility: Int)
+        fun retryRequest()
+        fun paging(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int)
     }
 }
