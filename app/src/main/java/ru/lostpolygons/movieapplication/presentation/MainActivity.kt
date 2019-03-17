@@ -18,6 +18,10 @@ import ru.lostpolygons.movieapplication.model.ItemMovie
 import javax.inject.Inject
 
 class MainActivity : BaseActivity(),MovieContract.View , MovieAdapter.MovieClickListener{
+
+    //TODO по поводу адаптации вёрстки под разные размеры
+    //как пример создан ресурс sw360dp-land
+
     @Inject
     lateinit var presenter: MoviePresenter
 
