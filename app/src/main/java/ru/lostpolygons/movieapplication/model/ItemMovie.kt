@@ -3,6 +3,7 @@ package ru.lostpolygons.movieapplication.model
 import com.google.gson.annotations.SerializedName
 
 data class ItemMovie (
+    val id: Int,
     val title: String,
     @SerializedName("poster_path")
     val posterPath: String,

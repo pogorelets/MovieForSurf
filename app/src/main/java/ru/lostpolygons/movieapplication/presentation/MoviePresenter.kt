@@ -5,6 +5,7 @@ import android.view.View
 
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import ru.apptimizm.formatfit.di.preferences.PreferenceProvider
 import ru.lostpolygons.movieapplication.base.BasePresenter
 import ru.lostpolygons.movieapplication.domain.FilterMovie
 import ru.lostpolygons.movieapplication.domain.GetMovie
@@ -18,22 +19,31 @@ class MoviePresenter @Inject constructor(
 
     private var currentPage = 0
     private var totalPages = 0
-    private var filterPage = 1
+    private var filterPage = 0
+    private var totalFilterPage = 0
     private val listMovies: MutableList<ItemMovie> = mutableListOf()
     private var listFilterResult: List<ItemMovie> = listOf()
     private var stateNotFound = View.GONE
     private var stateErrorRequest = View.GONE
     private var stateFilterSearch = View.GONE
     private var isLoading = false
+    private var isFilterLoading = false
     private var firstPosition = 0
+    private var firstFilterPosition = 0
     private var configuration = 0
+    private var query = ""
+    private var listFavorites: MutableList<Int> = mutableListOf()
 
-    override fun start() {
-        if (currentPage == 0) getMovies(currentPage + 1)
+
+    override fun start() { if (currentPage == 0) { getMovies(currentPage + 1) } }
+
+    fun setFavorite(list: MutableList<Int>){
+        listFavorites = list
     }
 
     override fun attach(view: MovieContract.View) {
         super.attach(view)
+
         if (currentPage == 0) view.showProgress()
         setOrientationView(configuration)
         when {
@@ -43,15 +53,15 @@ class MoviePresenter @Inject constructor(
             }
             stateErrorRequest == View.VISIBLE -> view.setStateErrorRequest(View.VISIBLE)
             listFilterResult.isNotEmpty() -> {
-                view.showFilterResults(listFilterResult)
+                view.showFilterResults(listFilterResult,listFavorites)
                 view.visibleSearchClear()
+                view.setListPosition(firstFilterPosition)
             }
             listMovies.isNotEmpty() -> {
-                view.updateAdapter(listMovies)
+                view.showFilterResults(listMovies,listFavorites)
                 view.setListPosition(firstPosition)
             }
         }
-
     }
 
     fun setConfiguration(config: Int){ configuration = config }
@@ -62,13 +72,39 @@ class MoviePresenter @Inject constructor(
     }
 
     override fun clearSearch() {
+        query = ""
+        firstFilterPosition = 0
         listFilterResult = listOf()
-        view?.showFilterResults(listMovies)
+        view?.showFilterResults(listMovies,listFavorites)
         view?.goneSearchClear()
+    }
 
+    fun pullRefresh(){
+        view?.clearList()
+        if (listFilterResult.isNotEmpty())pullRefreshFilterList()
+        else pullRefreshAllMovieList()
+    }
+
+    private  fun pullRefreshFilterList(){
+        filterPage = 0
+        totalFilterPage = 0
+        firstFilterPosition = 0
+        totalPages = 0
+        listFilterResult = listOf()
+        filterMovies(query)
+    }
+
+    private fun pullRefreshAllMovieList(){
+        currentPage = 0
+        totalPages = 0
+        firstPosition = 0
+        firstFilterPosition = 0
+        listMovies.clear()
+        getMovies(currentPage + 1)
     }
 
     override fun getMovies(page: Int) {
+        if (currentPage == 0) view?.showProgress()
         isLoading = true
         disposables += getMovie.execute(GetMovie.Params(page))
             .subscribeOn(Schedulers.io())
@@ -78,15 +114,18 @@ class MoviePresenter @Inject constructor(
                 listMovies.addAll(it.results)
                 currentPage = it.page
                 totalPages = it.totalPages
-                view?.updateAdapter(it.results)
+                view?.updateAdapter(it.results,listFavorites)
                 isLoading = false
                 view?.hideLoadingFooter()
 
             },
                 {
                     view?.hideLoadingFooter()
-                    view?.setStateErrorRequest(View.VISIBLE)
-                    stateErrorRequest = View.VISIBLE
+                    if (currentPage == 0) {
+                        view?.setStateErrorRequest(View.VISIBLE)
+                        stateErrorRequest = View.VISIBLE
+                    } else view?.setRepeatFooter()
+
                     lastOperation = Runnable { getMovies(currentPage) }
                     isLoading = false
                 })
@@ -104,18 +143,24 @@ class MoviePresenter @Inject constructor(
     }
 
     fun retryRequest() {
+        view?.hideRepeatFooter()
         lastOperation?.run()
     }
 
     override fun filterMovies(query: String) {
+        this.query = query
+        isFilterLoading = true
         view?.setStateFilterSearch(View.VISIBLE)
         stateFilterSearch = View.VISIBLE
-        disposables += filterMovie.execute(FilterMovie.Params(filterPage, query))
+        disposables += filterMovie.execute(FilterMovie.Params(filterPage + 1, query))
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ it ->
+                isFilterLoading = false
+                filterPage = it.page
+                totalFilterPage = it.totalPages
                 listFilterResult = it.results
-                view?.showFilterResults(it.results)
+                view?.showFilterResults(it.results,listFavorites)
                 view?.visibleSearchClear()
                 view?.setStateFilterSearch(View.GONE)
                 stateFilterSearch = View.GONE
@@ -125,7 +170,9 @@ class MoviePresenter @Inject constructor(
                 }
             },
                 {
-                    view?.setStateErrorRequest(View.VISIBLE)
+                    isFilterLoading = false
+                    if (currentPage == 0) view?.setStateErrorRequest(View.VISIBLE)
+                    else view?.setRepeatFooter()
                     stateErrorRequest = View.VISIBLE
                     lastOperation = Runnable { filterMovies(query) }
                     view?.setStateFilterSearch(View.GONE)
@@ -133,7 +180,22 @@ class MoviePresenter @Inject constructor(
                 })
     }
 
-    fun pagingListMovies(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int) {
+    fun paging(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int) {
+        if (listFilterResult.isNotEmpty()){ pagingFilterList(visibleItemCount,totalItemCount,firstVisibleItemPosition)
+        } else pagingAllMovieList(visibleItemCount, totalItemCount, firstVisibleItemPosition)
+    }
+
+    private fun pagingFilterList(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int){
+        if (!isFilterLoading && filterPage != totalFilterPage) {
+            if ((visibleItemCount + firstVisibleItemPosition) >=
+                totalItemCount && firstVisibleItemPosition >= 0) {
+                view?.showLoadingFooter()
+                filterMovies(query)
+            }
+        }
+    }
+
+    private fun pagingAllMovieList(visibleItemCount: Int, totalItemCount: Int, firstVisibleItemPosition: Int){
         if (!isLoading && currentPage != totalPages) {
             if ((visibleItemCount + firstVisibleItemPosition) >=
                 totalItemCount && firstVisibleItemPosition >= 0) {
@@ -144,6 +206,7 @@ class MoviePresenter @Inject constructor(
     }
 
     fun saveListMoviePosition(firstVisibleItemPosition: Int){
-        firstPosition = firstVisibleItemPosition
+        if (listFilterResult.isNotEmpty()) firstFilterPosition = firstVisibleItemPosition
+        else firstPosition = firstVisibleItemPosition
     }
 }

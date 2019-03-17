@@ -43,6 +43,8 @@
                                                 android:layout_marginEnd="8dp"
                                                 app:layout_constraintBottom_toBottomOf="parent"
                                                                                           />
+
+
     <include layout="@layout/message_not_found"/>
     <include layout="@layout/error_request"/>
 
